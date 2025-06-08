@@ -1,52 +1,58 @@
-import { UserDetails } from "../components/user-details";
-import { OrganizationSwitcher, UserButton } from "@clerk/nextjs";
-import { CodeSwitcher } from "../components/code-switcher";
-import { LearnMore } from "../components/learn-more";
-import { Footer } from "../components/footer";
-import { ClerkLogo } from "../components/clerk-logo";
-import { NextLogo } from "../components/next-logo";
+"use client";
 
-import { DASHBOARD_CARDS } from "../consts/cards";
+import { useEffect, useState } from "react";
+import { columns } from "./columns";
+import { DataTable } from "./data-table";
+import { Input } from "@/components/ui/input";
 
-export default async function DashboardPage() {
+export interface Order {
+  id: string;
+  customer_name: string;
+  phone_number: string;
+  email: string;
+  frame_price: number;
+  glass_price: number;
+  advance_paid: number;
+  total_amount: number;
+  order_date: string;
+  status: "pending" | "glass_arrived" | "fitted" | "completed";
+  notes: string | null;
+  deleted_at: string | null;
+}
+
+export default function OrdersPage() {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [filterDate, setFilterDate] = useState("");
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders`);
+        const json = await res.json();
+        setOrders(json.data || []); // Make sure `json.data` exists
+      } catch (error) {
+        console.error("Failed to fetch orders:", error);
+      }
+    };
+
+    fetchOrders();
+  }, []);
+
+  const filteredOrders = filterDate
+    ? orders.filter(order =>
+      new Date(order.order_date).toISOString().split("T")[0] === filterDate
+    )
+    : orders;
+
   return (
-    <>
-      <main className="max-w-[75rem] w-full mx-auto">
-        <div className="grid grid-cols-[1fr_20.5rem] gap-10 pb-10">
-          <div>
-            <header className="flex items-center justify-between w-full h-16 gap-4">
-              <div className="flex gap-4">
-                <ClerkLogo />
-                <div aria-hidden className="w-px h-6 bg-[#C7C7C8]" />
-                <NextLogo />
-              </div>
-              <div className="flex items-center gap-2">
-                <OrganizationSwitcher
-                  appearance={{
-                    elements: {
-                      organizationPreviewAvatarBox: "size-6",
-                    },
-                  }}
-                />
-                <UserButton
-                  afterSignOutUrl="/"
-                  appearance={{
-                    elements: {
-                      userButtonAvatarBox: "size-6",
-                    },
-                  }}
-                />
-              </div>
-            </header>
-            <UserDetails />
-          </div>
-          <div className="pt-[3.5rem]">
-            <CodeSwitcher />
-          </div>
-        </div>
-      </main>
-      <LearnMore cards={DASHBOARD_CARDS} />
-      <Footer />
-    </>
+    <div className="p-6 space-y-4">
+      <Input
+        type="date"
+        value={filterDate}
+        onChange={(e) => setFilterDate(e.target.value)}
+        className="w-64"
+      />
+      <DataTable columns={columns} data={filteredOrders} />
+    </div>
   );
 }
