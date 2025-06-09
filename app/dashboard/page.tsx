@@ -39,12 +39,16 @@ export default function OrdersPage() {
     advance_paid: "",
   });
 
-  const fetchOrders = () => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders`)
-      .then((res) => res.json())
-      .then((data) => setOrders(data.data || []))
-      .catch(console.error);
+  const fetchOrders = async () => {
+    try {
+      const res = await fetch("/api/orders");
+      const json = await res.json();
+      setOrders(json.data || []);
+    } catch (err) {
+      console.error("Failed to fetch orders:", err);
+    }
   };
+
 
   useEffect(() => {
     fetchOrders();
@@ -66,7 +70,7 @@ export default function OrdersPage() {
     };
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders`, {
+      const res = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
