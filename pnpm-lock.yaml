@@ -97,11 +97,11 @@ importers:
         version: 5.8.3
       ui:
         specifier: github:shadcn/ui
+<<<<<<< HEAD
+        version: git+https://git@github.com:shadcn/ui.git#a659e093530e6d4e800184231cc9c60da22492cf(@types/node@22.15.30)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(ts-node@10.9.2(@types/node@20.5.1)(typescript@5.8.3))(typescript@5.8.3)
+=======
         version: git+https://git@github.com:shadcn/ui.git#82d94eee385317eb2eb2fd24019a5312cf3c0a60(@types/node@22.15.30)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(ts-node@10.9.2(@types/node@20.5.1)(typescript@5.8.3))(typescript@5.8.3)
-    devDependencies:
-      '@types/nodemailer':
-        specifier: ^6.4.17
-        version: 6.4.17
+>>>>>>> parent of 22005a7 (fix: switch shadcn/ui to HTTPS for Vercel compatibility)
 
 packages:
 
@@ -4334,8 +4334,8 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
-  ui@git+https://git@github.com:shadcn/ui.git#82d94eee385317eb2eb2fd24019a5312cf3c0a60:
-    resolution: {commit: 82d94eee385317eb2eb2fd24019a5312cf3c0a60, repo: git@github.com:shadcn/ui.git, type: git}
+  ui@git+https://git@github.com:shadcn/ui.git#a659e093530e6d4e800184231cc9c60da22492cf:
+    resolution: {commit: a659e093530e6d4e800184231cc9c60da22492cf, repo: git@github.com:shadcn/ui.git, type: git}
     version: 0.0.1
 
   unbox-primitive@1.1.0:
@@ -9119,7 +9119,7 @@ snapshots:
 
   typescript@5.8.3: {}
 
-  ui@git+https://git@github.com:shadcn/ui.git#82d94eee385317eb2eb2fd24019a5312cf3c0a60(@types/node@22.15.30)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(ts-node@10.9.2(@types/node@20.5.1)(typescript@5.8.3))(typescript@5.8.3):
+  ui@git+https://git@github.com:shadcn/ui.git#a659e093530e6d4e800184231cc9c60da22492cf(@types/node@22.15.30)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(ts-node@10.9.2(@types/node@20.5.1)(typescript@5.8.3))(typescript@5.8.3):
     dependencies:
       '@babel/core': 7.27.4
       '@changesets/changelog-github': 0.4.8
