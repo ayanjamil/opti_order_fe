@@ -39,12 +39,18 @@ export default function OrdersPage() {
     advance_paid: "",
   });
 
-  const fetchOrders = () => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders`)
-      .then((res) => res.json())
-      .then((data) => setOrders(data.data || []))
-      .catch(console.error);
+  const fetchOrders = async () => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders`);
+      if (!res.ok) throw new Error("Failed to fetch orders");
+
+      const data = await res.json();
+      setOrders(data.data || []);
+    } catch (error) {
+      console.error("❌ Error fetching orders:", error);
+    }
   };
+
 
   useEffect(() => {
     fetchOrders();
