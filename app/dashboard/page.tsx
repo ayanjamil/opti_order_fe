@@ -41,13 +41,11 @@ export default function OrdersPage() {
 
   const fetchOrders = async () => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders`);
-      if (!res.ok) throw new Error("Failed to fetch orders");
-
-      const data = await res.json();
-      setOrders(data.data || []);
-    } catch (error) {
-      console.error("❌ Error fetching orders:", error);
+      const res = await fetch("/api/orders");
+      const json = await res.json();
+      setOrders(json.data || []);
+    } catch (err) {
+      console.error("Failed to fetch orders:", err);
     }
   };
 
@@ -72,7 +70,7 @@ export default function OrdersPage() {
     };
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders`, {
+      const res = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

@@ -65,7 +65,7 @@ export const columns: ColumnDef<Order>[] = [
 
             const handleStatusChange = async (newStatus: Order["status"]) => {
                 try {
-                    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders/${order.id}`, {
+                    const res = await fetch(`/api/orders/${order.id}`, {
                         method: "PATCH",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ status: newStatus }),
@@ -110,7 +110,7 @@ export const columns: ColumnDef<Order>[] = [
             const handleUpdate = async () => {
                 setLoading(true);
                 try {
-                    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders/${order.id}`, {
+                    const res = await fetch(`/api/orders/${order.id}`, {
                         method: "PATCH",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify(formData), // includes name, phone, email, etc.
