@@ -34,7 +34,7 @@ export default function OrdersPage() {
   return (
     <div className="p-6 space-y-6 pt-10 mt-10">
       <div className="flex font-extrabold text-4xl justify-center text-gray-600">
-        Nain Opticals Admin Dashboard
+        Order List Dashboard
       </div>
 
       <div className="flex items-center justify-between">
