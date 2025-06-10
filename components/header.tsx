@@ -73,7 +73,7 @@ const Header: React.FC = () => {
                     <ul className="hidden md:flex space-x-6 items-center">
                         {menuItems.map(item => (
                             <li key={item.text}>
-                                <Link href={item.url} className="text-white hover:text-yellow-400 transition-colors">
+                                <Link href={item.url} className="text-gray-200 hover:text-white transition-colors ">
                                     {item.text}
                                 </Link>
                             </li>

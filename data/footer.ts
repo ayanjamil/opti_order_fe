@@ -31,10 +31,6 @@ export const footerDetails: {
             url: "/#features"
         },
         {
-            text: "Results",
-            url: "/#results"
-        },
-        {
             text: "Reach Us",
             url: "/#reachus"
         },
