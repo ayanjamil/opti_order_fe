@@ -1,3 +1,4 @@
+// /app/api/orders/route.ts
 import { NextRequest, NextResponse } from "next/server";
 // import supabase from "@/lib/supabaseClient";
 // import sendEmail from "@/lib/sendEmail"; // make sure paths are right
@@ -26,6 +27,7 @@ export async function POST(req: NextRequest) {
         frame_price,
         glass_price,
         advance_paid,
+        power_details, // full object from frontend
     } = body;
 
     const total_amount = Number(frame_price) + Number(glass_price);
@@ -42,6 +44,7 @@ export async function POST(req: NextRequest) {
                 advance_paid,
                 total_amount,
                 status: "pending",
+                power_details, // storing nested object
             },
         ])
         .select();

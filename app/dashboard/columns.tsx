@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { Order } from "./page";
+// import { Order } from "./page";
+import { Order } from "@/lib/types";
 import { toast } from "sonner";
 import {
     Select,
@@ -22,8 +23,17 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+// import { Link } from "lucide-react";
+import Link from "next/link";
+import OrderStatusSelect from "@/components/OrderStatusSelect";
+
 
 export const columns: ColumnDef<Order>[] = [
+    {
+        accessorKey: "order_date",
+        header: "Date",
+        cell: ({ row }) => format(new Date(row.original.order_date), "dd MMM yyyy"),
+    },
     {
         accessorKey: "customer_name",
         header: "Customer",
@@ -41,154 +51,39 @@ export const columns: ColumnDef<Order>[] = [
         header: "Total ₹",
     },
     {
-        accessorKey: "frame_price",
-        header: "Frame price ₹",
-    },
-    {
-        accessorKey: "glass_price",
-        header: "Glass price ₹",
-    },
-    {
         accessorKey: "advance_paid",
         header: "Advance ₹",
     },
-    {
-        accessorKey: "order_date",
-        header: "Date",
-        cell: ({ row }) => format(new Date(row.original.order_date), "dd MMM yyyy"),
-    },
+
     {
         accessorKey: "status",
         header: "Status",
         cell: ({ row }) => {
             const order = row.original;
 
-            const handleStatusChange = async (newStatus: Order["status"]) => {
-                try {
-                    const res = await fetch(`/api/orders/${order.id}`, {
-                        method: "PATCH",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ status: newStatus }),
-                    });
-
-                    if (!res.ok) throw new Error("Failed to update status");
-                    toast.success(`Status updated to "${newStatus}"`);
-                } catch (error: any) {
-                    toast.error("Error updating status: " + error.message);
-                }
-            };
-
             return (
-                <Select defaultValue={order.status} onValueChange={(value) => handleStatusChange(value as Order["status"])}>
-                    <SelectTrigger className="w-[140px]">
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="glass_arrived">Glass Arrived</SelectItem>
-                        <SelectItem value="fitted">Fitted</SelectItem>
-                        <SelectItem value="completed">Completed</SelectItem>
-                    </SelectContent>
-                </Select>
+                <OrderStatusSelect
+                    orderId={order.id}
+                    currentStatus={order.status}
+                />
             );
         },
     },
+
     {
-        id: "actions",
-        header: "Edit",
+        id: 'details',
+        header: 'Details',
         cell: ({ row }) => {
-            const order = row.original;
-            const [formOpen, setFormOpen] = useState(false);
-            const [loading, setLoading] = useState(false);
-            const [formData, setFormData] = useState({ ...order });
-
-            const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-                const { name, value } = e.target;
-                setFormData((prev) => ({ ...prev, [name]: value }));
-            };
-
-            const handleUpdate = async () => {
-                setLoading(true);
-                try {
-                    const res = await fetch(`/api/orders/${order.id}`, {
-                        method: "PATCH",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(formData), // includes name, phone, email, etc.
-                    });
-
-                    if (!res.ok) throw new Error("Failed to update order");
-
-                    toast.success("Order updated successfully");
-                    setFormOpen(false);
-                } catch (error: any) {
-                    toast.error("Update failed: " + error.message);
-                } finally {
-                    setLoading(false);
-                }
-            };
-
-
-
+            // grab the real id off row.original
+            const id = row.original.id
             return (
-                <Dialog open={formOpen} onOpenChange={setFormOpen}>
-                    <DialogTrigger asChild>
-                        <Button size="sm" variant="outline">Edit</Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Edit Order</DialogTitle>
-                        </DialogHeader>
+                <Link href={`/dashboard/${id}`}>
+                    <Button variant="outline">
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-                            <Input
-                                placeholder="Customer Name"
-                                name="customer_name"
-                                value={formData.customer_name}
-                                onChange={handleChange}
-                            />
-                            <Input
-                                placeholder="Phone Number"
-                                name="phone_number"
-                                value={formData.phone_number}
-                                onChange={handleChange}
-                            />
-                            <Input
-                                placeholder="Email"
-                                name="email"
-                                value={formData.email}
-                                onChange={handleChange}
-                            />
-                            <Input
-                                placeholder="Frame Price"
-                                name="frame_price"
-                                type="number"
-                                value={formData.frame_price}
-                                onChange={handleChange}
-                            />
-                            <Input
-                                placeholder="Glass Price"
-                                name="glass_price"
-                                type="number"
-                                value={formData.glass_price}
-                                onChange={handleChange}
-                            />
-                            <Input
-                                placeholder="Advance Paid"
-                                name="advance_paid"
-                                type="number"
-                                value={formData.advance_paid}
-                                onChange={handleChange}
-                            />
-                        </div>
-
-                        <DialogFooter>
-                            <Button onClick={handleUpdate} disabled={loading}>
-                                {loading ? "Updating..." : "Update Order"}
-                            </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
-            );
-        },
-    },
+                        Details
+                    </Button>
+                </Link>
+            )
+        }
+    }
 ];
