@@ -105,7 +105,7 @@ export default function OrdersPage() {
     : orders;
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 pt-10 mt-10">
       {/* Header with Date Filter + Add Order */}
       <div className="flex font-extrabold text-4xl justify-center text-gray-600">Nain Opticals Admin Dashboard</div>
       <div className="flex items-center justify-between">

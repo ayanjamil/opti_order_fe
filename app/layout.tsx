@@ -48,9 +48,13 @@ export default function RootLayout({
           },
         }}
       >
-        <body className={`min-h-screen flex flex-col antialiased`}>
+        <body className="min-h-screen flex flex-col antialiased">
           <Header />
-          {children}
+
+          <main className="flex-grow">
+            {children}
+          </main>
+
           <Footer />
         </body>
       </ClerkProvider>
