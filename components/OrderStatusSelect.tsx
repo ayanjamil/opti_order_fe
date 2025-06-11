@@ -41,7 +41,7 @@ export default function OrderStatusSelect({ orderId, currentStatus, onUpdated }:
                 <SelectItem value="pending">Pending</SelectItem>
                 <SelectItem value="glass_arrived">Glass Arrived</SelectItem>
                 <SelectItem value="fitted">Fitted</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
+                {/* <SelectItem value="completed">Completed</SelectItem> */}
             </SelectContent>
         </Select>
     );
