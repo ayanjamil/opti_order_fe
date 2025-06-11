@@ -28,6 +28,23 @@ export default function OrderDetailsPage() {
     // const [dialogOpen, setDialogOpen] = useState(false);
 
     // inside return:
+    async function downloadInvoice(order: Order) {
+        const res = await fetch("/api/generate-invoice", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ data: order }),
+        });
+
+        if (!res.ok) throw new Error("Failed to generate invoice");
+
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "invoice.pdf";
+        link.click();
+    }
+
 
 
 
@@ -75,7 +92,7 @@ export default function OrderDetailsPage() {
                         Back
                     </Button>
                 </Link>
-                <div className="flex flex-row gap-1">
+                {/* <div className="flex flex-row gap-1">
                     <strong className="my-auto mx-2">Status:</strong>
                     <OrderStatusSelect
                         orderId={order.id}
@@ -84,7 +101,10 @@ export default function OrderDetailsPage() {
                             setOrder((prev) => prev ? { ...prev, status: newStatus } : prev)
                         }
                     />
-                </div>
+                </div> */}
+                <Button onClick={() => downloadInvoice(order)}>
+                    Download Invoice
+                </Button>
 
                 <Button onClick={() => setDialogOpen(true)}>Edit Order</Button>
 
@@ -141,6 +161,9 @@ export default function OrderDetailsPage() {
                     </CardContent>
                 </Card>
             )}
+
+
+
         </div>
     );
 }
