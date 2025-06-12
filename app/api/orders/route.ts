@@ -20,32 +20,36 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
     const body = await req.json();
+
     const {
-        customer_name,
-        phone_number,
-        email,
-        frame_price,
-        glass_price,
-        advance_paid,
-        power_details, // full object from frontend
+        customer_data,
+        purchase_details, // frames[], glasses[], advance_paid
+        power_details
     } = body;
 
-    const total_amount = Number(frame_price) + Number(glass_price);
+    // Calculate frame and glass totals
+    const frameTotal = purchase_details.frames?.reduce(
+        (sum: number, frame: any) => sum + frame.price * (frame.quantity || 1),
+        0
+    ) || 0;
+
+    const glassTotal = purchase_details.glasses?.reduce(
+        (sum: number, glass: any) => sum + glass.price * (glass.quantity || 1),
+        0
+    ) || 0;
+
+    const total_amount = frameTotal + glassTotal;
+    purchase_details.total_amount = total_amount;
 
     const { data, error } = await supabase
         .from("orders")
         .insert([
             {
-                customer_name,
-                phone_number,
-                email,
-                frame_price,
-                glass_price,
-                advance_paid,
-                total_amount,
-                status: "pending",
-                power_details, // storing nested object
-            },
+                customer_data,
+                purchase_details,
+                power_details,
+                status: "pending"
+            }
         ])
         .select();
 
@@ -54,12 +58,13 @@ export async function POST(req: NextRequest) {
     }
 
     const order = data[0];
-    const remainingAmount = total_amount - advance_paid;
+    const remaining = total_amount - purchase_details.advance_paid;
 
-    const subject = "Your Order at NainOpticals is Confirmed!";
-    const msg = `Hey ${order.customer_name},\n\nYour order has been placed!\nOrder ID: ${order.id}\nTotal: ₹${total_amount}\nAdvance Paid: ₹${advance_paid}\nRemaining: ₹${remainingAmount}`;
-
-    await sendEmail(email, subject, msg);
+    await sendEmail(
+        customer_data.email,
+        "Your Order at NainOpticals is Confirmed!",
+        `Hey ${customer_data.name},\n\nYour order has been placed!\nOrder ID: ${order.id}\nTotal: ₹${total_amount}\nAdvance Paid: ₹${purchase_details.advance_paid}\nRemaining: ₹${remaining}`
+    );
 
     return NextResponse.json({ data: order });
 }

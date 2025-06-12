@@ -1,11 +1,10 @@
-// /app/api/generate-invoice/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
-// import fetch from "node-fetch"; // Optional: only for loading external logo
 
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
+        console.log("📥 Generating invoice for order:", body);
         const order = body.data;
 
         if (!order || !order.id) {
@@ -37,32 +36,26 @@ export async function POST(req: NextRequest) {
             });
         };
 
-        // Optional: Add Logo (ensure it's a base64 PNG or hosted image)
-        // const logoUrl = "https://yourdomain.com/logo.png";
-        // const logoBytes = await fetch(logoUrl).then(res => res.arrayBuffer());
-        // const logoImage = await pdfDoc.embedPng(logoBytes);
-        // page.drawImage(logoImage, { x: 50, y: y - 60, width: 100, height: 40 });
-        // y -= 70;
+        const toNumber = (value: any): number => {
+            const n = Number(value);
+            return isNaN(n) ? 0 : n;
+        };
 
-        // Company Header
-        drawText("NAIN OPTICALS", 220, y, 18, true);
-        y -= 20;
-        drawText("132 Street Name, City - 560001", 200, y);
-        y -= 15;
-        drawText("GSTIN: 07AAFD8457JU3 | contact@nainopticals.in", 170, y);
-        y -= 30;
+        // Header
+        drawText("NAIN OPTICALS", 220, y, 18, true); y -= 20;
+        drawText("132 Street Name, City - 560001", 200, y); y -= 15;
+        drawText("GSTIN: 07AAFD8457JU3 | contact@nainopticals.in", 170, y); y -= 30;
 
-        // Invoice Details
+        // Invoice Info
         drawText(`Invoice No: ${order.id.slice(0, 8)}`, 50, y);
-        drawText(`Date: ${new Date(order.order_date).toLocaleDateString()}`, 400, y);
-        y -= 25;
+        drawText(`Date: ${new Date(order.order_date).toLocaleDateString()}`, 400, y); y -= 25;
 
         // Customer Info
         drawLine(50, y, 545, y); y -= 15;
         drawText("Bill To:", 50, y, 12, true); y -= 15;
-        drawText(`Name: ${order.customer_name}`, 50, y);
-        drawText(`Phone: ${order.phone_number}`, 300, y); y -= 15;
-        drawText(`Email: ${order.email}`, 50, y); y -= 25;
+        drawText(`Name: ${order.customer_data?.name || "-"}`, 50, y);
+        drawText(`Phone: ${order.customer_data?.phone || "-"}`, 300, y); y -= 15;
+        drawText(`Email: ${order.customer_data?.email || "-"}`, 50, y); y -= 25;
         drawLine(50, y, 545, y); y -= 15;
 
         // Power Details
@@ -82,8 +75,8 @@ export async function POST(req: NextRequest) {
         drawText("Amount", 470, y, 11, true); y -= 10;
         drawLine(50, y, 545, y); y -= 15;
 
-        // Items
-        const drawItem = (desc: string, qty: number, rate: number) => {
+        const drawItem = (desc: string, qty: number, rateRaw: any) => {
+            const rate = toNumber(rateRaw);
             const amt = qty * rate;
             drawText(desc, 55, y);
             drawText(`${qty}`, 275, y);
@@ -92,19 +85,39 @@ export async function POST(req: NextRequest) {
             y -= 20;
         };
 
-        drawItem("Frame", 1, order.frame_price);
-        drawItem("Glass", 1, order.glass_price);
+        // Draw items
+        const frames = order.purchase_details?.frames || [];
+        const glasses = order.purchase_details?.glasses || [];
+
+        if (frames.length > 0) {
+            frames.forEach((f: any, idx: number) => {
+                drawItem(f.description || `Frame ${idx + 1}`, 1, f.price);
+            });
+        }
+
+        if (glasses.length > 0) {
+            glasses.forEach((g: any, idx: number) => {
+                drawItem(g.description || `Glass ${idx + 1}`, 1, g.price);
+            });
+        }
+
+        if (frames.length === 0 && glasses.length === 0) {
+            drawText("No items listed", 55, y); y -= 20;
+        }
 
         // Totals
         drawLine(50, y, 545, y); y -= 20;
+        const total = toNumber(order.purchase_details?.total_amount);
+        const advance = toNumber(order.purchase_details?.advance_paid);
+
         drawText("Total", 375, y, 11, true);
-        drawText(`${order.total_amount.toFixed(2)}`, 475, y); y -= 15;
+        drawText(`${total.toFixed(2)}`, 475, y); y -= 15;
 
         drawText("Advance Paid", 375, y);
-        drawText(`${order.advance_paid.toFixed(2)}`, 475, y); y -= 15;
+        drawText(`${advance.toFixed(2)}`, 475, y); y -= 15;
 
         drawText("Balance Due", 375, y, 11, true);
-        drawText(`${(order.total_amount - order.advance_paid).toFixed(2)}`, 475, y); y -= 30;
+        drawText(`${(total - advance).toFixed(2)}`, 475, y); y -= 30;
 
         drawText(`Status: ${order.status}`, 50, y); y -= 30;
 
@@ -122,6 +135,7 @@ export async function POST(req: NextRequest) {
                 "Content-Disposition": "inline; filename=invoice.pdf",
             },
         });
+
     } catch (err: any) {
         console.error("❌ Invoice generation failed:", err);
         return NextResponse.json({ error: err.message }, { status: 500 });
