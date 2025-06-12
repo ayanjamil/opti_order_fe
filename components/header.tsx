@@ -145,13 +145,29 @@ const Header: React.FC = () => {
                             </li>
                         ))}
                         <li>
-                            <Link
-                                href="#cta"
-                                className="bg-primary hover:bg-primary-accent px-5 py-2 rounded-full block w-fit"
-                                onClick={toggleMenu}
+                            <div className="relative flex gap-3">
+                                <SignedIn>
+                                    <Link
+                                        href="/dashboard"
+                                        className="px-4 py-2 rounded-full bg-[#131316] text-white text-sm font-semibold"
+                                    >
+                                        Dashboard
+                                    </Link>
+                                </SignedIn>
+                                <SignedOut>
+                                    <SignInButton>
+                                        <button className="px-4 py-2 rounded-full bg-[#131316] text-white text-sm font-semibold">
+                                            Sign in
+                                        </button>
+                                    </SignInButton>
+                                </SignedOut>
+                            </div>
+                            {/* <Link
+                                href="/#cta"
+                                className=" bg-zinc-100 hover:bg-primary-accent px-6 py-2 rounded-full transition-colors"
                             >
-                                Get Started
-                            </Link>
+                                Book a Demo
+                            </Link> */}
                         </li>
                     </ul>
                 </div>
