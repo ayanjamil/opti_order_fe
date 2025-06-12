@@ -7,16 +7,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import {
-    Dialog,
-    DialogTrigger,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter,
-} from "@/components/ui/dialog";
-import OrderForm from "@/components/OrderForm";
-import OrderDialog from "@/components/OrderDialog";
+// import OrderDialog from "@/components/OrderDialog";
 import Link from "next/link";
 import OrderStatusSelect from "@/components/OrderStatusSelect";
 
@@ -25,28 +16,6 @@ export default function OrderDetailsPage() {
     const [order, setOrder] = useState<Order | null>(null);
     const [loading, setLoading] = useState(true);
     const [dialogOpen, setDialogOpen] = useState(false);
-    // const [dialogOpen, setDialogOpen] = useState(false);
-
-    // inside return:
-    async function downloadInvoice(order: Order) {
-        const res = await fetch("/api/generate-invoice", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ data: order }),
-        });
-
-        if (!res.ok) throw new Error("Failed to generate invoice");
-
-        const blob = await res.blob();
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = "invoice.pdf";
-        link.click();
-    }
-
-
-
 
     const fetchOrder = async () => {
         try {
@@ -60,6 +29,23 @@ export default function OrderDetailsPage() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const downloadInvoice = async (order: Order) => {
+        const res = await fetch("/api/generate-invoice", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ data: order }),
+        });
+
+        if (!res.ok) return toast.error("Failed to generate invoice");
+
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "invoice.pdf";
+        link.click();
     };
 
     useEffect(() => {
@@ -81,89 +67,105 @@ export default function OrderDetailsPage() {
         return <div className="p-6 text-red-500">Order not found.</div>;
     }
 
-    const { power_details } = order;
+    const { power_details, customer_data, purchase_details } = order;
+    const balance =
+        purchase_details.total_amount - purchase_details.advance_paid;
 
     return (
         <div className="p-6 space-y-6 pt-24">
-            <h1 className="text-4xl font-bold text-gray-800  flex justify-center m-8 p-8">Order Details</h1>
-            <div className="flex justify-between items-center">
+            <h1 className="text-4xl font-bold text-gray-800 flex justify-center m-8 p-8">
+                Order Details
+            </h1>
+
+            <div className="flex flex-wrap justify-between gap-2 items-center">
                 <Link href={"/dashboard"}>
-                    <Button>
-                        Back
-                    </Button>
+                    <Button>Back</Button>
                 </Link>
-                {/* <div className="flex flex-row gap-1">
-                    <strong className="my-auto mx-2">Status:</strong>
-                    <OrderStatusSelect
-                        orderId={order.id}
-                        currentStatus={order.status}
-                        onUpdated={(newStatus) =>
-                            setOrder((prev) => prev ? { ...prev, status: newStatus } : prev)
-                        }
-                    />
-                </div> */}
-                <Button onClick={() => downloadInvoice(order)}>
-                    Download Invoice
-                </Button>
 
-                <Button onClick={() => setDialogOpen(true)}>Edit Order</Button>
+                <OrderStatusSelect
+                    orderId={order.id}
+                    currentStatus={order.status}
+                    onUpdated={(newStatus) =>
+                        setOrder((prev) => (prev ? { ...prev, status: newStatus } : prev))
+                    }
+                />
 
+                <Button onClick={() => downloadInvoice(order)}>Download Invoice</Button>
+                {/* <Button onClick={() => setDialogOpen(true)}>Edit Order</Button> */}
 
-                {/* Controlled dialog */}
-                <OrderDialog
+                {/* <OrderDialog
                     open={dialogOpen}
                     setOpen={setDialogOpen}
                     orderId={order.id}
                     initialData={order}
                     onSuccess={fetchOrder}
-                />
+                /> */}
             </div>
 
-
+            {/* Customer & Order Summary */}
             <Card>
                 <CardHeader>
-                    <h1 className="text-2xl font-bold">
-                        Order Details
-                    </h1>
+                    <h2 className="text-2xl font-bold">Customer & Order Info</h2>
                 </CardHeader>
-                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-6">
-                    <div><strong>Customer:</strong> {order.customer_name}</div>
-                    <div><strong>Phone:</strong> {order.phone_number}</div>
-                    <div><strong>Email:</strong> {order.email}</div>
+                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+                    <div><strong>Name:</strong> {customer_data.name}</div>
+                    <div><strong>Phone:</strong> {customer_data.phone}</div>
+                    <div><strong>Email:</strong> {customer_data.email}</div>
                     <div><strong>Status:</strong> {order.status}</div>
-
-                    <div><strong>Frame Price:</strong> ₹{order.frame_price}</div>
-                    <div><strong>Glass Price:</strong> ₹{order.glass_price}</div>
-                    <div><strong>Total Amount:</strong> ₹{order.total_amount}</div>
-                    <div><strong>Advance Paid:</strong> ₹{order.advance_paid}</div>
                     <div><strong>Order Date:</strong> {new Date(order.order_date).toLocaleDateString()}</div>
                 </CardContent>
             </Card>
 
+            {/* Purchase Details */}
+            <Card>
+                <CardHeader>
+                    <h2 className="text-2xl font-bold">Purchase Details</h2>
+                </CardHeader>
+                <CardContent className="pt-4 space-y-4">
+                    <div>
+                        <h3 className="font-semibold mb-1">Frames</h3>
+                        {purchase_details.frames.map((frame, idx) => (
+                            <div key={idx} className="text-sm">
+                                {frame.description} – ₹{frame.price} × {frame.quantity}
+                            </div>
+                        ))}
+                    </div>
+
+                    <div>
+                        <h3 className="font-semibold mb-1">Glasses</h3>
+                        {purchase_details.glasses.map((glass, idx) => (
+                            <div key={idx} className="text-sm">
+                                {glass.description} – ₹{glass.price} × {glass.quantity}
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="text-sm pt-4 space-y-1">
+                        <div><strong>Total Amount:</strong> ₹{purchase_details.total_amount}</div>
+                        <div><strong>Advance Paid:</strong> ₹{purchase_details.advance_paid}</div>
+                        <div><strong>Balance:</strong> ₹{balance}</div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Power Details */}
             {power_details && (
                 <Card>
                     <CardHeader>
-                        <h1 className="text-2xl font-bold">
-                            Power Details
-                        </h1>
+                        <h2 className="text-2xl font-bold">Power Details</h2>
                     </CardHeader>
-                    <CardContent className="pt-6 space-y-2">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div><strong>SPH Left:</strong> {power_details.sph?.left || "-"}</div>
-                            <div><strong>SPH Right:</strong> {power_details.sph?.right || "-"}</div>
-                            <div><strong>CYL Left:</strong> {power_details.cyl?.left || "-"}</div>
-                            <div><strong>CYL Right:</strong> {power_details.cyl?.right || "-"}</div>
-                            <div><strong>Axis Left:</strong> {power_details.axis?.left || "-"}</div>
-                            <div><strong>Axis Right:</strong> {power_details.axis?.right || "-"}</div>
-                            <div><strong>Addition:</strong> {power_details.addition || "-"}</div>
-                            <div><strong>PD:</strong> {power_details.pd_readings || "-"}</div>
-                        </div>
+                    <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div><strong>SPH Left:</strong> {power_details.sph?.left || "-"}</div>
+                        <div><strong>SPH Right:</strong> {power_details.sph?.right || "-"}</div>
+                        <div><strong>CYL Left:</strong> {power_details.cyl?.left || "-"}</div>
+                        <div><strong>CYL Right:</strong> {power_details.cyl?.right || "-"}</div>
+                        <div><strong>Axis Left:</strong> {power_details.axis?.left || "-"}</div>
+                        <div><strong>Axis Right:</strong> {power_details.axis?.right || "-"}</div>
+                        <div><strong>Addition:</strong> {power_details.addition || "-"}</div>
+                        <div><strong>PD Readings:</strong> {power_details.pd_readings || "-"}</div>
                     </CardContent>
                 </Card>
             )}
-
-
-
         </div>
     );
 }
