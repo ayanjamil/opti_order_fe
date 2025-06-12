@@ -16,6 +16,7 @@ export default function OrderDetailsPage() {
     const [order, setOrder] = useState<Order | null>(null);
     const [loading, setLoading] = useState(true);
     const [dialogOpen, setDialogOpen] = useState(false);
+    const [invoiceLoading, setInvoiceLoading] = useState(false);
 
     const fetchOrder = async () => {
         try {
@@ -32,22 +33,35 @@ export default function OrderDetailsPage() {
     };
 
     const downloadInvoice = async (order: Order) => {
-        const res = await fetch("/api/generate-invoice", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ data: order }),
-        });
+        try {
+            setInvoiceLoading(true);
+            toast.info("Generating invoice...");
 
-        if (!res.ok) return toast.error("Failed to generate invoice");
+            const res = await fetch("/api/generate-invoice", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ data: order }),
+            });
 
-        const blob = await res.blob();
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = "invoice.pdf";
-        link.click();
+            if (!res.ok) {
+                toast.error("Failed to generate invoice");
+                return;
+            }
+
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "invoice.pdf";
+            link.click();
+
+            toast.success("Invoice downloaded successfully!");
+        } catch (err: any) {
+            toast.error("Invoice generation failed: " + err.message);
+        } finally {
+            setInvoiceLoading(false);
+        }
     };
-
     useEffect(() => {
         fetchOrder();
     }, [id]);
@@ -90,7 +104,12 @@ export default function OrderDetailsPage() {
                     }
                 />
 
-                <Button onClick={() => downloadInvoice(order)}>Download Invoice</Button>
+                <Button
+                    onClick={() => downloadInvoice(order)}
+                    disabled={invoiceLoading}
+                >
+                    {invoiceLoading ? "Generating..." : "Download Invoice"}
+                </Button>
                 {/* <Button onClick={() => setDialogOpen(true)}>Edit Order</Button> */}
 
                 {/* <OrderDialog
