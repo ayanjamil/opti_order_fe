@@ -5,6 +5,7 @@ import { Metadata } from "next";
 import localFont from "next/font/local";
 import Header from "@/components/header";
 import Footer from "@/components/Footer";
+import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://clerk-next-app.vercel.app/"),
@@ -49,6 +50,7 @@ export default function RootLayout({
         }}
       >
         <body className="min-h-screen flex flex-col antialiased">
+          <Toaster richColors position="top-center" /> {/* Add this line */}
           <Header />
 
           <main className="flex-grow">
