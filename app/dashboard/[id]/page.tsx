@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 // import OrderDialog from "@/components/OrderDialog";
 import Link from "next/link";
 import OrderStatusSelect from "@/components/OrderStatusSelect";
+import OrderDialog from "@/components/OrderDialog";
 
 export default function OrderDetailsPage() {
     const { id } = useParams();
@@ -110,15 +111,15 @@ export default function OrderDetailsPage() {
                 >
                     {invoiceLoading ? "Generating..." : "Download Invoice"}
                 </Button>
-                {/* <Button onClick={() => setDialogOpen(true)}>Edit Order</Button> */}
+                <Button onClick={() => setDialogOpen(true)}>Edit Order</Button>
 
-                {/* <OrderDialog
+                <OrderDialog
                     open={dialogOpen}
                     setOpen={setDialogOpen}
                     orderId={order.id}
                     initialData={order}
                     onSuccess={fetchOrder}
-                /> */}
+                />
             </div>
 
             {/* Customer & Order Summary */}
