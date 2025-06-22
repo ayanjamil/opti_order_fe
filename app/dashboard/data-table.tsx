@@ -5,7 +5,7 @@ import {
     flexRender,
     getCoreRowModel,
     useReactTable,
-} from "@tanstack/react-table"
+} from "@tanstack/react-table";
 
 import {
     Table,
@@ -14,14 +14,16 @@ import {
     TableHead,
     TableHeader,
     TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 
-interface DataTableProps<TData, TValue> {
-    columns: ColumnDef<TData, TValue>[]
-    data: TData[]
+import Link from "next/link";
+
+interface DataTableProps<TData extends { id: string }, TValue> {
+    columns: ColumnDef<TData, TValue>[];
+    data: TData[];
 }
 
-export function DataTable<TData, TValue>({
+export function DataTable<TData extends { id: string }, TValue>({
     columns,
     data,
 }: DataTableProps<TData, TValue>) {
@@ -29,7 +31,7 @@ export function DataTable<TData, TValue>({
         data,
         columns,
         getCoreRowModel: getCoreRowModel(),
-    })
+    });
 
     return (
         <div className="rounded-md border">
@@ -37,44 +39,51 @@ export function DataTable<TData, TValue>({
                 <TableHeader>
                     {table.getHeaderGroups().map((headerGroup) => (
                         <TableRow key={headerGroup.id}>
-                            {headerGroup.headers.map((header) => {
-                                return (
-                                    <TableHead key={header.id}>
-                                        {header.isPlaceholder
-                                            ? null
-                                            : flexRender(
-                                                header.column.columnDef.header,
-                                                header.getContext()
-                                            )}
-                                    </TableHead>
-                                )
-                            })}
+                            {headerGroup.headers.map((header) => (
+                                <TableHead key={header.id}>
+                                    {header.isPlaceholder
+                                        ? null
+                                        : flexRender(header.column.columnDef.header, header.getContext())}
+                                </TableHead>
+                            ))}
                         </TableRow>
                     ))}
                 </TableHeader>
+
                 <TableBody>
-                    {table.getRowModel().rows?.length ? (
-                        table.getRowModel().rows.map((row) => (
+                    {table.getRowModel().rows.map((row) => {
+                        const orderId = row.original.id;
+
+                        return (
                             <TableRow
                                 key={row.id}
+                                className="cursor-pointer hover:bg-muted transition-colors"
                                 data-state={row.getIsSelected() && "selected"}
                             >
-                                {row.getVisibleCells().map((cell) => (
-                                    <TableCell key={cell.id}>
-                                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                    </TableCell>
-                                ))}
+                                {row.getVisibleCells().map((cell) => {
+                                    const columnId = cell.column.id;
+
+                                    // Columns like "actions" and "status" shouldn't link
+                                    const isNonClickable = columnId === "actions" || columnId === "status";
+
+                                    return (
+                                        <TableCell key={cell.id}>
+                                            {isNonClickable ? (
+                                                flexRender(cell.column.columnDef.cell, cell.getContext())
+                                            ) : (
+                                                <Link href={`/dashboard/${orderId}`} className="block w-full h-full">
+                                                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                                </Link>
+                                            )}
+                                        </TableCell>
+                                    );
+                                })}
                             </TableRow>
-                        ))
-                    ) : (
-                        <TableRow>
-                            <TableCell colSpan={columns.length} className="h-24 text-center">
-                                No results.
-                            </TableCell>
-                        </TableRow>
-                    )}
+                        );
+                    })}
                 </TableBody>
+
             </Table>
         </div>
-    )
+    );
 }
