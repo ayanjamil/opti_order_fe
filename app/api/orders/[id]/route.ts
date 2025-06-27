@@ -58,21 +58,22 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
         if (updates.status === 'glass_arrived') {
             subject = 'Your Lenses Have Arrived!';
-            msg = `Hi ${order.customer_data.name},\n\nWe’re excited to let you know that your lenses have arrived at Nain Opticals and are currently being fitted into your frame.\n\nWe’ll notify you again as soon as your glasses are ready for collection.\n\n- Team Nain Opticals`;
+            msg = `Hi ${order.customer_data.name}, your lenses are in! We'll notify you once fitting is done. - NainOpticals`;
         }
 
         if (updates.status === 'fitted') {
             subject = 'Your Glasses Are Ready for Pickup!';
-            msg = `Hi ${order.customer_data.name},\n\nGreat news! Your glasses are now ready for pickup at Nain Opticals.\n\nFeel free to visit the store anytime during our working hours.\n\n- Team Nain Opticals`;
+            msg = `Hi ${order.customer_data.name}, your glasses are ready! Pick them up anytime. - NainOpticals`;
         }
 
-        if (updates.status === 'completed') {
-            subject = 'Thank You for Your Order!';
-            msg = `Hi ${order.customer_data.name},\n\nYour order has been successfully completed.\n\nThank you for choosing Nain Opticals. If you have any questions or require adjustments, feel free to reach out.\n\n- Team Nain Opticals`;
-        }
+        // if (updates.status === 'completed') {
+        //     subject = 'Thank You for Your Order!';
+        //     msg = `Hi ${order.customer_data.name}, your order is complete. Thanks for choosing us! - NainOpticals`;
+        // }
+
 
         // ✅ Send Email
-        // await sendEmail(order.customer_data.email, subject, msg);
+        await sendEmail(order.customer_data.email, subject, msg);
 
         // ✅ Send SMS
         const rawPhone = order.customer_data.phone;
