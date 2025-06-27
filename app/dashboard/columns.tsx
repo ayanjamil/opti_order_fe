@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import OrderStatusSelect from "@/components/OrderStatusSelect";
 import { Loader2, Trash2 } from "lucide-react";
+import { Checkbox } from "@headlessui/react";
 
 export const columns: ColumnDef<Order>[] = [
 
@@ -59,6 +60,62 @@ export const columns: ColumnDef<Order>[] = [
             );
         },
     },
+    {
+        accessorKey: "close",
+        header: "Close order",
+        cell: ({ row }) => {
+            const order = row.original;
+            const [loading, setLoading] = useState(false);
+
+            const handleCloseOrder = async () => {
+                setLoading(true);
+                try {
+                    const updatedPurchaseDetails = {
+                        ...order.purchase_details,
+                        advance_paid: order.purchase_details.total_amount,
+                    };
+
+                    const res = await fetch(`/api/orders/${order.id}`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            status: "completed",
+                            purchase_details: updatedPurchaseDetails,
+                        }),
+                    });
+
+                    if (!res.ok) throw new Error("Failed to close order");
+
+                    toast.success("Order marked as completed");
+                    setTimeout(() => window.location.reload(), 1000);
+                } catch (error: any) {
+                    toast.error("Error: " + error.message);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            return (
+                <div onClick={(e) => e.stopPropagation()}>
+                    <Button
+                        onClick={handleCloseOrder}
+                        disabled={loading || order.status === "completed"}
+                        variant="default"
+                    >
+                        {loading ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Closing...
+                            </>
+                        ) : (
+                            "Close"
+                        )}
+                    </Button>
+                </div>
+            );
+        },
+    },
+
     {
         id: "actions",
         header: "Actions",
