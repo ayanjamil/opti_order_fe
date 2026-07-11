@@ -56,25 +56,28 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
                 msg = `Hi ${order.customer_data.name}, your glasses are ready! Pick them up anytime. - NainOpticals`;
             }
 
-            // if (updates.status === 'completed') {
-            //     subject = 'Thank You for Your Order!';
-            //     msg = `Hi ${order.customer_data.name}, your order is complete. Thanks for choosing us! - NainOpticals`;
-            // }
-
-
-            await sendEmail(order.customer_data.email, subject, msg);
-
-            const rawPhone = order.customer_data.phone;
-            if (rawPhone) {
-                const cleanNumber = rawPhone.replace(/\D/g, '');
-                if (cleanNumber.length === 10) {
-                    await sendSMS(cleanNumber, msg);
-                } else {
-                    console.warn("Invalid phone number for SMS:", rawPhone);
-                }
-            } else {
-                console.warn("No phone number provided for SMS:", order.customer_data);
+            if (updates.status === 'completed') {
+                subject = 'Thank You for Your Order!';
+                msg = `Hi ${order.customer_data.name}, your order is complete. Thanks for choosing us! - NainOpticals`;
             }
+
+
+            if (subject && msg) {
+                await sendEmail(order.customer_data.email, subject, msg);
+            }
+
+            // SMS notifications disabled completely (Twilio account suspended)
+            // const rawPhone = order.customer_data.phone;
+            // if (rawPhone) {
+            //     const cleanNumber = rawPhone.replace(/\D/g, '');
+            //     if (cleanNumber.length === 10) {
+            //         await sendSMS(cleanNumber, msg);
+            //     } else {
+            //         console.warn("Invalid phone number for SMS:", rawPhone);
+            //     }
+            // } else {
+            //     console.warn("No phone number provided for SMS:", order.customer_data);
+            // }
         }
 
         return NextResponse.json({ message: 'Order updated' });
