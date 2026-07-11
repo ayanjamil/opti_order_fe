@@ -1,8 +1,8 @@
 // app/api/orders/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabaseClient";
+import { deleteOrder, getOrderById, updateOrder } from "@/lib/orders";
 import { sendEmail } from "@/lib/sendEmail";
-import { sendSMS } from "@/lib/sendSMS"; // ✅ Add this at top with other imports
+import { sendSMS } from "@/lib/sendSMS";
 
 
 export async function GET(
@@ -11,17 +11,17 @@ export async function GET(
 ) {
     const id = (await params).id;
 
-    const { data, error } = await supabase
-        .from("orders")
-        .select("*")
-        .eq("id", id)
-        .single();
+    try {
+        const data = await getOrderById(id);
 
-    if (error) {
-        return NextResponse.json({ error }, { status: 500 });
+        if (!data) {
+            return NextResponse.json({ error: "Order not found" }, { status: 404 });
+        }
+
+        return NextResponse.json({ data });
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
     }
-
-    return NextResponse.json({ data });
 }
 
 
@@ -29,13 +29,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const id = (await params).id;
     const updates = await req.json();
 
-    const { data: updated, error: updateError } = await supabase
-        .from('orders')
-        .update(updates)
-        .eq('id', id);
+    const updated = await updateOrder(id, updates);
 
-    if (updateError) {
-        return NextResponse.json({ error: updateError.message }, { status: 400 });
+    if (!updated) {
+        return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
     if (
@@ -43,15 +40,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         updates.status === 'fitted' ||
         updates.status === 'completed'
     ) {
-        const { data: order, error: fetchError } = await supabase
-            .from('orders')
-            .select()
-            .eq('id', id)
-            .single();
-
-        if (fetchError) {
-            return NextResponse.json({ error: fetchError.message }, { status: 500 });
-        }
+        const order = updated;
 
         let subject = '';
         let msg = '';
@@ -72,21 +61,18 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         // }
 
 
-        // ✅ Send Email
         await sendEmail(order.customer_data.email, subject, msg);
 
-        // ✅ Send SMS
         const rawPhone = order.customer_data.phone;
         if (rawPhone) {
             const cleanNumber = rawPhone.replace(/\D/g, '');
             if (cleanNumber.length === 10) {
-                // const withCountryCode = "+91" + cleanNumber;
                 await sendSMS(cleanNumber, msg);
             } else {
-                console.warn("⚠️ Invalid phone number for SMS:", rawPhone);
+                console.warn("Invalid phone number for SMS:", rawPhone);
             }
         } else {
-            console.warn("⚠️ No phone number provided for SMS:", order.customer_data);
+            console.warn("No phone number provided for SMS:", order.customer_data);
         }
     }
 
@@ -101,14 +87,10 @@ export async function DELETE(
 ) {
     const id = (await params).id;
 
-    const { error } = await supabase
-        .from('orders')
-        .delete()
-        .eq('id', id);
-
-    if (error) {
+    try {
+        await deleteOrder(id);
+        return NextResponse.json({ message: 'Order deleted successfully' });
+    } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
-
-    return NextResponse.json({ message: 'Order deleted successfully' });
 }
