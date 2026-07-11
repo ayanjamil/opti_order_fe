@@ -1,4 +1,5 @@
 import { getSql } from "@/lib/db";
+import { sanitizeCustomerData, validateCustomerData } from "@/lib/orderValidation";
 
 type OrderItem = {
     description?: string;
@@ -59,6 +60,13 @@ export async function getOrderById(id: string) {
 
 export async function createOrder(body: any) {
     const sql = getSql();
+    const customerData = sanitizeCustomerData(body.customer_data ?? {});
+    const customerValidationError = validateCustomerData(customerData);
+
+    if (customerValidationError) {
+        throw new Error(customerValidationError);
+    }
+
     const purchaseDetails = withTotalAmount(body.purchase_details);
 
     const rows = (await sql`
@@ -69,7 +77,7 @@ export async function createOrder(body: any) {
             status
         )
         VALUES (
-            ${JSON.stringify(body.customer_data)}::jsonb,
+            ${JSON.stringify(customerData)}::jsonb,
             ${JSON.stringify(purchaseDetails)}::jsonb,
             ${JSON.stringify(body.power_details ?? {})}::jsonb,
             'pending'
@@ -91,7 +99,14 @@ export async function updateOrder(id: string, updates: any) {
     };
 
     if ("customer_data" in updates) {
-        addAssignment("customer_data", JSON.stringify(updates.customer_data), "::jsonb");
+        const customerData = sanitizeCustomerData(updates.customer_data ?? {});
+        const customerValidationError = validateCustomerData(customerData);
+
+        if (customerValidationError) {
+            throw new Error(customerValidationError);
+        }
+
+        addAssignment("customer_data", JSON.stringify(customerData), "::jsonb");
     }
 
     if ("purchase_details" in updates) {

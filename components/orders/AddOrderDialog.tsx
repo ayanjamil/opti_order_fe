@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner";
 import PowerDetailsInputs from "../PowerDetailsInputs";
 import { PowerDetails } from "@/lib/types";
+import { sanitizeCustomerData, validateCustomerFields } from "@/lib/orderValidation";
 
 interface Props {
     onSuccess: () => void;
@@ -34,9 +35,41 @@ export default function AddOrderDialog({ onSuccess }: Props) {
         addition: "",
         pd_readings: "",
     });
+    const [errors, setErrors] = useState<{ name?: string; phone?: string; email?: string }>({});
 
     const handleCustomerChange = (field: keyof typeof customerData, value: string) => {
-        setCustomerData((prev) => ({ ...prev, [field]: value }));
+        let cleanValue = value;
+        if (field === "phone") {
+            cleanValue = value.replace(/\D/g, "").slice(0, 10);
+        } else if (field === "name") {
+            cleanValue = value.replace(/[^A-Za-z\s.'-]/g, "");
+            if (cleanValue.startsWith(" ")) {
+                cleanValue = cleanValue.trimStart();
+            }
+            cleanValue = cleanValue.replace(/\s{2,}/g, " ");
+        } else if (field === "email") {
+            cleanValue = value.replace(/\s/g, "");
+        }
+
+        setCustomerData((prev) => {
+            const updated = { ...prev, [field]: cleanValue };
+            if (errors[field]) {
+                const fieldErrors = validateCustomerFields(updated);
+                setErrors((prevErrors) => ({
+                    ...prevErrors,
+                    [field]: fieldErrors[field],
+                }));
+            }
+            return updated;
+        });
+    };
+
+    const handleBlur = (field: keyof typeof customerData) => {
+        const fieldErrors = validateCustomerFields(customerData);
+        setErrors((prevErrors) => ({
+            ...prevErrors,
+            [field]: fieldErrors[field],
+        }));
     };
 
     const handleItemChange = (
@@ -56,10 +89,23 @@ export default function AddOrderDialog({ onSuccess }: Props) {
     };
 
     const handleSubmit = async () => {
+        const normalizedCustomerData = sanitizeCustomerData(customerData);
+        const fieldErrors = validateCustomerFields(normalizedCustomerData);
+
+        if (Object.keys(fieldErrors).length > 0) {
+            setErrors(fieldErrors);
+            const firstError = fieldErrors.name || fieldErrors.phone || fieldErrors.email;
+            if (firstError) {
+                toast.error(firstError);
+            }
+            return;
+        }
+
+        setErrors({});
         setLoading(true);
 
         const payload = {
-            customer_data: customerData,
+            customer_data: normalizedCustomerData,
             purchase_details: {
                 frames,
                 glasses,
@@ -81,6 +127,7 @@ export default function AddOrderDialog({ onSuccess }: Props) {
 
             // Reset all state
             setCustomerData({ name: "", phone: "", email: "" });
+            setErrors({});
             setFrames([{ description: "", price: "", quantity: "" }]);
             setGlasses([{ description: "", price: "", quantity: "" }]);
             setAdvancePaid("");
@@ -101,8 +148,15 @@ export default function AddOrderDialog({ onSuccess }: Props) {
         }
     };
 
+    const handleOpenChange = (newOpen: boolean) => {
+        setOpen(newOpen);
+        if (!newOpen) {
+            setErrors({});
+        }
+    };
+
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
                 <Button>+ Add Order</Button>
             </DialogTrigger>
@@ -115,21 +169,48 @@ export default function AddOrderDialog({ onSuccess }: Props) {
                 <div className="space-y-6 py-4">
                     {/* Customer Info */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Input
-                            placeholder="Customer Name"
-                            value={customerData.name}
-                            onChange={(e) => handleCustomerChange("name", e.target.value)}
-                        />
-                        <Input
-                            placeholder="Phone Number"
-                            value={customerData.phone}
-                            onChange={(e) => handleCustomerChange("phone", e.target.value)}
-                        />
-                        <Input
-                            placeholder="Email"
-                            value={customerData.email}
-                            onChange={(e) => handleCustomerChange("email", e.target.value)}
-                        />
+                        <div>
+                            <Input
+                                placeholder="Customer Name"
+                                autoComplete="name"
+                                value={customerData.name}
+                                onChange={(e) => handleCustomerChange("name", e.target.value)}
+                                onBlur={() => handleBlur("name")}
+                                maxLength={80}
+                                aria-invalid={Boolean(errors.name)}
+                                className={errors.name ? "border-red-500 focus-visible:ring-red-500" : ""}
+                            />
+                            <p className="text-[11px] text-red-600 mt-1 min-h-4 leading-normal">{errors.name}</p>
+                        </div>
+                        <div>
+                            <Input
+                                placeholder="10-digit Phone Number"
+                                type="tel"
+                                inputMode="numeric"
+                                autoComplete="tel"
+                                value={customerData.phone}
+                                onChange={(e) => handleCustomerChange("phone", e.target.value)}
+                                onBlur={() => handleBlur("phone")}
+                                maxLength={10}
+                                aria-invalid={Boolean(errors.phone)}
+                                className={errors.phone ? "border-red-500 focus-visible:ring-red-500" : ""}
+                            />
+                            <p className="text-[11px] text-red-600 mt-1 min-h-4 leading-normal">{errors.phone}</p>
+                        </div>
+                        <div className="md:col-span-2">
+                            <Input
+                                placeholder="Email Address"
+                                type="email"
+                                autoComplete="email"
+                                value={customerData.email}
+                                onChange={(e) => handleCustomerChange("email", e.target.value)}
+                                onBlur={() => handleBlur("email")}
+                                maxLength={254}
+                                aria-invalid={Boolean(errors.email)}
+                                className={errors.email ? "border-red-500 focus-visible:ring-red-500" : ""}
+                            />
+                            <p className="text-[11px] text-red-600 mt-1 min-h-4 leading-normal">{errors.email}</p>
+                        </div>
                     </div>
 
                     {/* Frames */}

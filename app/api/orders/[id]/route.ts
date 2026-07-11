@@ -29,54 +29,58 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const id = (await params).id;
     const updates = await req.json();
 
-    const updated = await updateOrder(id, updates);
+    try {
+        const updated = await updateOrder(id, updates);
 
-    if (!updated) {
-        return NextResponse.json({ error: "Order not found" }, { status: 404 });
-    }
-
-    if (
-        updates.status === 'glass_arrived' ||
-        updates.status === 'fitted' ||
-        updates.status === 'completed'
-    ) {
-        const order = updated;
-
-        let subject = '';
-        let msg = '';
-
-        if (updates.status === 'glass_arrived') {
-            subject = 'Your Lenses Have Arrived!';
-            msg = `Hi ${order.customer_data.name}, your lenses are in! We'll notify you once fitting is done. - NainOpticals`;
+        if (!updated) {
+            return NextResponse.json({ error: "Order not found" }, { status: 404 });
         }
 
-        if (updates.status === 'fitted') {
-            subject = 'Your Glasses Are Ready for Pickup!';
-            msg = `Hi ${order.customer_data.name}, your glasses are ready! Pick them up anytime. - NainOpticals`;
-        }
+        if (
+            updates.status === 'glass_arrived' ||
+            updates.status === 'fitted' ||
+            updates.status === 'completed'
+        ) {
+            const order = updated;
 
-        // if (updates.status === 'completed') {
-        //     subject = 'Thank You for Your Order!';
-        //     msg = `Hi ${order.customer_data.name}, your order is complete. Thanks for choosing us! - NainOpticals`;
-        // }
+            let subject = '';
+            let msg = '';
 
-
-        await sendEmail(order.customer_data.email, subject, msg);
-
-        const rawPhone = order.customer_data.phone;
-        if (rawPhone) {
-            const cleanNumber = rawPhone.replace(/\D/g, '');
-            if (cleanNumber.length === 10) {
-                await sendSMS(cleanNumber, msg);
-            } else {
-                console.warn("Invalid phone number for SMS:", rawPhone);
+            if (updates.status === 'glass_arrived') {
+                subject = 'Your Lenses Have Arrived!';
+                msg = `Hi ${order.customer_data.name}, your lenses are in! We'll notify you once fitting is done. - NainOpticals`;
             }
-        } else {
-            console.warn("No phone number provided for SMS:", order.customer_data);
-        }
-    }
 
-    return NextResponse.json({ message: 'Order updated' });
+            if (updates.status === 'fitted') {
+                subject = 'Your Glasses Are Ready for Pickup!';
+                msg = `Hi ${order.customer_data.name}, your glasses are ready! Pick them up anytime. - NainOpticals`;
+            }
+
+            // if (updates.status === 'completed') {
+            //     subject = 'Thank You for Your Order!';
+            //     msg = `Hi ${order.customer_data.name}, your order is complete. Thanks for choosing us! - NainOpticals`;
+            // }
+
+
+            await sendEmail(order.customer_data.email, subject, msg);
+
+            const rawPhone = order.customer_data.phone;
+            if (rawPhone) {
+                const cleanNumber = rawPhone.replace(/\D/g, '');
+                if (cleanNumber.length === 10) {
+                    await sendSMS(cleanNumber, msg);
+                } else {
+                    console.warn("Invalid phone number for SMS:", rawPhone);
+                }
+            } else {
+                console.warn("No phone number provided for SMS:", order.customer_data);
+            }
+        }
+
+        return NextResponse.json({ message: 'Order updated' });
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 400 });
+    }
 }
 
 
