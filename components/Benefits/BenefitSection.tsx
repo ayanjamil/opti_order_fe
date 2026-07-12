@@ -26,7 +26,7 @@ const containerVariants: Variants = {
     },
     onscreen: {
         opacity: 1,
-        y: 100,
+        y: 0,
         transition: {
             type: "spring",
             bounce: 0.2,
@@ -93,9 +93,9 @@ const BenefitSection: React.FC<Props> = ({ benefit, imageAtRight }: Props) => {
                     </div>
                 </div>
 
-                <div className={clsx("mt-5 lg:mt-0", { "lg:order-2": imageAtRight })}>
-                    <div className={clsx("w-fit flex", { "justify-start": imageAtRight, "justify-end": !imageAtRight })}>
-                        <Image src={imageSrc} alt="title" width="384" height="762" quality={100} className="lg:ml-0" />
+                <div className={clsx("mt-5 lg:mt-0 w-full lg:w-auto flex justify-center", { "lg:order-2": imageAtRight })}>
+                    <div className={clsx("w-full max-w-[384px] flex", { "justify-center lg:justify-start": imageAtRight, "justify-center lg:justify-end": !imageAtRight })}>
+                        <Image src={imageSrc} alt="title" width={384} height={762} quality={100} className="w-full h-auto object-cover rounded-xl shadow-md lg:ml-0" />
                     </div>
                 </div>
             </motion.div>

@@ -203,7 +203,7 @@ export default function OrderDialog({
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>{orderId ? "Edit Order" : "Add Order"}</DialogTitle>
                 </DialogHeader>
