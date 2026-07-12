@@ -55,12 +55,12 @@ export default function OrdersPage() {
 
         </div>
 
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between">
           <Input
             type="date"
             value={filterDate}
             onChange={(e) => setFilterDate(e.target.value)}
-            className="w-64"
+            className="w-full sm:w-64"
           />
           <AddOrderDialog onSuccess={fetchOrders} />
         </div>
